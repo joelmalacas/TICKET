@@ -26,7 +26,7 @@
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
-/workshop/sources/.env
+/workshop/sources/ENV_CORS/.env
 
 # Gradle
 .idea/**/gradle.xml
