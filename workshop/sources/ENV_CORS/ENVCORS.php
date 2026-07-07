@@ -1,7 +1,5 @@
 <?php
 
-namespace ENV_CORS;
-
 class ENVCORS {
     private string $host;
     private int $port;

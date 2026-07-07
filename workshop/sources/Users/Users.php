@@ -1,10 +1,12 @@
 <?php
 
-use ENV_CORS\ENVCORS;
-
 include '../DataBase/DataBase.php';
 include '../Auth/Auth.php';
 include '../ENV_CORS/ENVCORS.php';
+
+//DATE CONFIG
+$date = new DateTime();
+$date->modify('+1 hour');
 
 //CONSTANTES
 const MinimoPasswordLength = 5;
@@ -12,6 +14,8 @@ const OFF = 'OFFLINE';
 const ON = 'ONLINE';
 const ROLE = 'USER';
 const ENCRYPT = 'sha256';
+
+define("DATE", $date->format('Y-m-d H:i:s'));
 
 //INSTANCE
 $EnvCors = new ENVCORS();
@@ -55,7 +59,7 @@ if (str_ends_with($uri, '/CreateUser') && ($_SERVER['REQUEST_METHOD'] == 'POST')
     $date->modify('+1 hour');
 
     $resCreate = $db->statementDB("INSERT INTO users (username, email, password, estado, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [$username, $email, $HashedPassword, OFF, $date->format('Y-m-d H:i:s'), $date->format('Y-m-d H:i:s')]);
+        [$username, $email, $HashedPassword, OFF, DATE, $date->format('Y-m-d H:i:s')]);
 
     if ($resCreate) {
         http_response_code(200);
@@ -144,11 +148,8 @@ if (str_ends_with($uri, '/UpdateUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')
 
     $hashedPassword = hash(ENCRYPT, $password);
 
-    $date = new DateTime();
-    $date->modify('+1 hour');
-
     $resUpdate = $db->statementDB("UPDATE users SET username = ?, email = ?, password = ?, updated_at = ? WHERE id = ?",
-        [$username, $email, $hashedPassword, $date->format('Y-m-d H:i:s'), $auth_user_id]);
+        [$username, $email, $hashedPassword, DATE, $auth_user_id]);
 
     if ($resUpdate) {
         http_response_code(200);
