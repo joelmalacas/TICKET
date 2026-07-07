@@ -8,7 +8,7 @@ class Auth {
         try{
             $token = bin2hex(random_bytes(32)); //64 char hex
 
-            if ($role == 'admin')
+            if ($role == 'ADMIN')
                 $db->statementDB("UPDATE admin SET token = ? WHERE id = ?", [$token, $user_id]);
             else
                 $db->statementDB("UPDATE users SET token = ? WHERE id = ?", [$token, $user_id]);
@@ -21,7 +21,7 @@ class Auth {
         }
     }
 
-    public function validateToken($db) {
+    public function validateToken($db, $role) {
         $headers = getallheaders();
         $auth = $headers['Authorization'] ?? '';
 
@@ -33,7 +33,10 @@ class Auth {
 
         $token = substr($auth, 7);
 
-        $res = $db->statementDB("SELECT id FROM users WHERE token = ?", [$token]);
+        if ($role == 'ADMIN')
+            $res = $db->statementDB("SELECT id FROM admin WHERE token = ?", [$token]);
+        else
+            $res = $db->statementDB("SELECT id FROM users WHERE token = ?", [$token]);
 
         if (empty($res)) {
             http_response_code(401);

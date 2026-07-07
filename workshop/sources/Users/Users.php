@@ -7,10 +7,11 @@ include '../Auth/Auth.php';
 include '../ENV_CORS/ENVCORS.php';
 
 //CONSTANTES
-const MinimoPasswordLenght = 5;
+const MinimoPasswordLength = 5;
 const OFF = 'OFFLINE';
 const ON = 'ONLINE';
-const USER = 'USER';
+const ROLE = 'USER';
+const ENCRYPT = 'sha256';
 
 //INSTANCE
 $EnvCors = new ENVCORS();
@@ -42,13 +43,13 @@ if (str_ends_with($uri, '/CreateUser') && ($_SERVER['REQUEST_METHOD'] == 'POST')
     }
 
     //Verificar Param
-    if ($username == null || $email == null || $password == null || strlen($password) < MinimoPasswordLenght) {
+    if ($username == null || $email == null || $password == null || strlen($password) < MinimoPasswordLength) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid parameters']);
         exit;
     }
 
-    $HashedPassword = hash('sha256', $password); //ENCODE password to sha-256 (64 char)
+    $HashedPassword = hash(ENCRYPT, $password); //ENCODE password to sha-256 (64 char)
 
     $date = new DateTime();
     $date->modify('+1 hour');
@@ -72,13 +73,13 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
     $pass = $input['password'];
 
     //VERIFICAR PARAM
-    if ($emailOrUsername == null || $pass == null || strlen($pass) < MinimoPasswordLenght) {
+    if ($emailOrUsername == null || $pass == null || strlen($pass) < MinimoPasswordLength) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid parameters']);
         exit;
     }
 
-    $hashedPassword = hash('sha256', $pass);
+    $hashedPassword = hash(ENCRYPT, $pass);
 
     $resLog = $db->statementDB(
         "SELECT id, username, email, password FROM users WHERE username = ? OR email = ?",
@@ -88,7 +89,7 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
     if (!empty($resLog) && count($resLog) > 0) {
         $user = $resLog[0];
 
-        if (hash('sha256', $pass) === $hashedPassword) {
+        if (hash(ENCRYPT, $pass) === $hashedPassword) {
             //TODO Mudar estado para online
             $resEstado = $db->statementDB("UPDATE users SET estado = ? WHERE id = ?", [ON, $user['id']]);
 
@@ -102,7 +103,7 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
 
         if ($loginOk) {
             //CREATE BARRER TOKEN
-            $token = $Auth->token($db, $user['id'], USER);
+            $token = $Auth->token($db, $user['id'], ROLE);
 
             http_response_code(200);
             echo json_encode(['success' => 'Login successful']);
@@ -118,7 +119,7 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
 
 //TODO ENDPOINT LOGOUT USER
 if (str_ends_with($uri, '/LogoutUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
-    $auth_user_id = $Auth->validateToken($db);
+    $auth_user_id = $Auth->validateToken($db, ROLE);
 
     $resLog = $db->statementDB("UPDATE users SET estado = ? WHERE id = ?", [OFF, $auth_user_id]);
     $resNullToken = $db->statementDB("UPDATE users SET token = ? WHERE id = ?", [NULL, $auth_user_id]);
@@ -133,11 +134,34 @@ if (str_ends_with($uri, '/LogoutUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')
 }
 
 //TODO ENDPOINT UPDATE USER
-if (str_ends_with($uri, '/UpdateUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {}
+if (str_ends_with($uri, '/UpdateUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
+    $auth_user_id = $Auth->validateToken($db, ROLE);
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $username = $input['username'];
+    $email = $input['email'];
+    $password = $input['password'];
+
+    $hashedPassword = hash(ENCRYPT, $password);
+
+    $date = new DateTime();
+    $date->modify('+1 hour');
+
+    $resUpdate = $db->statementDB("UPDATE users SET username = ?, email = ?, password = ?, updated_at = ? WHERE id = ?",
+        [$username, $email, $hashedPassword, $date->format('Y-m-d H:i:s'), $auth_user_id]);
+
+    if ($resUpdate) {
+        http_response_code(200);
+        echo json_encode(['success' => 'User updated']);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Error updating user']);
+    }
+}
 
 //TODO ENDPOINT GET USER
 if (str_ends_with($uri, '/InfoUser') && ($_SERVER['REQUEST_METHOD'] === 'GET')) {
-    $auth_user_id = $Auth->validateToken($db);
+    $auth_user_id = $Auth->validateToken($db, ROLE);
 
     $resGET = $db->statementDB("SELECT username, email,created_at FROM users WHERE id = ?", [$auth_user_id]);
 }
