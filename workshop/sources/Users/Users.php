@@ -59,7 +59,7 @@ if (str_ends_with($uri, '/CreateUser') && ($_SERVER['REQUEST_METHOD'] == 'POST')
     $date->modify('+1 hour');
 
     $resCreate = $db->statementDB("INSERT INTO users (username, email, password, estado, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [$username, $email, $HashedPassword, OFF, DATE, $date->format('Y-m-d H:i:s')]);
+        [$username, $email, $HashedPassword, OFF, DATE, DATE]);
 
     if ($resCreate) {
         http_response_code(200);
