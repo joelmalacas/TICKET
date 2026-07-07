@@ -164,4 +164,12 @@ if (str_ends_with($uri, '/InfoUser') && ($_SERVER['REQUEST_METHOD'] === 'GET')) 
     $auth_user_id = $Auth->validateToken($db, ROLE);
 
     $resGET = $db->statementDB("SELECT username, email,created_at FROM users WHERE id = ?", [$auth_user_id]);
+
+    if ($resGET) {
+        http_response_code(200);
+        echo json_encode(['success' => $resGET]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Error getting user']);
+    }
 }
