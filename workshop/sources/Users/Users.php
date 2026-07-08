@@ -55,9 +55,6 @@ if (str_ends_with($uri, '/CreateUser') && ($_SERVER['REQUEST_METHOD'] == 'POST')
 
     $HashedPassword = hash(ENCRYPT, $password); //ENCODE password to sha-256 (64 char)
 
-    $date = new DateTime();
-    $date->modify('+1 hour');
-
     $resCreate = $db->statementDB("INSERT INTO users (username, email, password, estado, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
         [$username, $email, $HashedPassword, OFF, DATE, DATE]);
 
