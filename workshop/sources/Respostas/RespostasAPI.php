@@ -1,7 +1,5 @@
 <?php
 
-use ENV_CORS\ENVCORS;
-
 include '../DataBase/DataBase.php';
 include '../Auth/Auth.php';
 include '../ENV_CORS/ENVCORS.php';
