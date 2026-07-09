@@ -32,28 +32,23 @@ if (str_ends_with($uri, '/TICKETS') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
      */
 
     $input = json_decode(file_get_contents('php://input'), true);
-    $Role = $input['role'] ?? '';
 
-    if (empty($Role) || $Role !== ROLEuser || $Role !== ROLEadmin) {
-        http_response_code(400);
-        echo json_encode(['ROLE NOT FOUND']);
-        exit;
-    }
-
-    $auth_id = $Auth->validateToken($db, $Role);
+    $authData = $Auth->validateToken($db);
+    $auth_id = $authData['id'];
+    $Role = $authData['role'];
 
     if ($Role === ROLEuser)
-        $resTICKETS = $db->statementDB("SELECT * FROM tickets WHERE user_id = ?", $auth_id);
+        $resTICKETS = $db->statementDB("SELECT * FROM tickets WHERE user_id = ?", [$auth_id]);
 
     if ($Role === ROLEadmin)
         $resTICKETS = $db->statementDB("SELECT * FROM tickets");
 
-    if ($resTICKETS->rowCount() > 0) {
+    if ($resTICKETS && count($resTICKETS) > 0) {
         http_response_code(200);
-        echo json_encode(['TICKETS', $resTICKETS]);
+        echo json_encode(['TICKET', $resTICKETS[0]]);
     } else {
         http_response_code(404);
-        echo json_encode(['TICKETS NOT FOUND']);
+        echo json_encode(['TICKET NOT FOUND']);
     }
 }
 
@@ -67,40 +62,32 @@ if (str_ends_with($uri, '/TICKET') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
      */
 
     $input = json_decode(file_get_contents('php://input'), true);
-    $idTicket = $input['id_ticket'];
-    $Role = $input['role'] ?? '';
+    $idTicket = $input['id_ticket'] ?? null;
 
-    if (empty($Role) || $Role !== ROLEuser || $Role !== ROLEadmin) {
+    if (empty($idTicket)) {
         http_response_code(400);
-        echo json_encode(['ROLE NOT FOUND']);
+        echo json_encode(['ID TICKET NOT FOUND']);
         exit;
     }
 
-    $auth_id = $Auth->validateToken($db, $Role);
+    $authData = $Auth->validateToken($db);
 
-    if ($Role == ROLEuser) {
+    $auth_id = $authData['id'];
+    $Role = $authData['role'];
+
+    if ($Role == ROLEuser)
         $resTicket = $db->statementDB("SELECT * FROM tickets WHERE id = ? AND user_id = ?",
             [$idTicket, $auth_id]);
 
-        if ($resTicket->rowCount() > 0) {
-            http_response_code(200);
-            echo json_encode(['TICKET', $resTicket]);
-        } else {
-            http_response_code(404);
-            echo json_encode(['TICKET NOT FOUND']);
-        }
-    }
-
-    if ($Role == ROLEadmin) {
+    if ($Role == ROLEadmin)
         $resTicket = $db->statementDB("SELECT * FROM tickets WHERE id = ?",
             [$idTicket]);
 
-        if ($resTicket->rowCount() > 0) {
-            http_response_code(200);
-            echo json_encode(['TICKET', $resTicket]);
-        } else {
-            http_response_code(404);
-            echo json_encode(['TICKET NOT FOUND']);
-        }
+    if ($resTicket && count($resTicket) > 0) {
+        http_response_code(200);
+        echo json_encode(['TICKET', $resTicket[0]]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['TICKET NOT FOUND']);
     }
 }

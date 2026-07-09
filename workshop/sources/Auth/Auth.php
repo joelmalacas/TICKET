@@ -21,7 +21,7 @@ class Auth {
         }
     }
 
-    public function validateToken($db, $role) {
+    public function validateToken($db) {
         $headers = getallheaders();
         $auth = $headers['Authorization'] ?? '';
 
@@ -33,17 +33,23 @@ class Auth {
 
         $token = substr($auth, 7);
 
-        if ($role == 'ADMIN')
-            $res = $db->statementDB("SELECT id FROM admin WHERE token = ?", [$token]);
-        else
-            $res = $db->statementDB("SELECT id FROM users WHERE token = ?", [$token]);
+        // 1. Tenta encontrar o token na tabela admin
+        $resAdmin = $db->statementDB("SELECT id FROM admin WHERE token = ?", [$token]);
 
-        if (empty($res)) {
-            http_response_code(401);
-            echo json_encode(['Error' => 'Token inválido ou expirado']);
-            exit;
+        if ($resAdmin && count($resAdmin) > 0) {
+            return ['id' => $resAdmin[0]['id'], 'role' => 'ADMIN'];
         }
 
-        return $res[0]['id'];
+        // 2. Se não for admin, tenta na tabela users
+        $resUser = $db->statementDB("SELECT id FROM users WHERE token = ?", [$token]);
+
+        if ($resUser && count($resUser) > 0) {
+            return ['id' => $resUser[0]['id'], 'role' => 'USER'];
+        }
+
+        // 3. Se não encontrou em nenhuma das duas
+        http_response_code(401);
+        echo json_encode(['Error' => 'Token inválido ou expirado']);
+        exit;
     }
 }

@@ -120,7 +120,8 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
 
 //TODO ENDPOINT LOGOUT USER
 if (str_ends_with($uri, '/LogoutUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
-    $auth_user_id = $Auth->validateToken($db, ROLE);
+    $authData = $Auth->validateToken($db);
+    $auth_user_id = $authData['id'];
 
     $resLog = $db->statementDB("UPDATE users SET estado = ? WHERE id = ?", [OFF, $auth_user_id]);
     $resNullToken = $db->statementDB("UPDATE users SET token = ? WHERE id = ?", [NULL, $auth_user_id]);
@@ -136,7 +137,8 @@ if (str_ends_with($uri, '/LogoutUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')
 
 //TODO ENDPOINT UPDATE USER
 if (str_ends_with($uri, '/UpdateUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
-    $auth_user_id = $Auth->validateToken($db, ROLE);
+    $authData = $Auth->validateToken($db);
+    $auth_user_id = $authData['id'];
 
     $input = json_decode(file_get_contents('php://input'), true);
     $username = $input['username'];
@@ -159,9 +161,11 @@ if (str_ends_with($uri, '/UpdateUser') && ($_SERVER['REQUEST_METHOD'] === 'PUT')
 
 //TODO ENDPOINT GET USER
 if (str_ends_with($uri, '/InfoUser') && ($_SERVER['REQUEST_METHOD'] === 'GET')) {
-    $auth_user_id = $Auth->validateToken($db, ROLE);
+    $authData = $Auth->validateToken($db);
+    $auth_user_id = $authData['id'];
 
-    $resGET = $db->statementDB("SELECT username, email,created_at FROM users WHERE id = ?", [$auth_user_id]);
+    $resGET = $db->statementDB("SELECT username, email,created_at FROM users WHERE id = ?",
+        [$auth_user_id]);
 
     if ($resGET) {
         http_response_code(200);
