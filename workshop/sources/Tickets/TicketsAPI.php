@@ -37,8 +37,6 @@ if (str_ends_with($uri, '/TICKETS') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
          * ROLE: USER
      */
 
-    $input = json_decode(file_get_contents('php://input'), true);
-
     $authData = $Auth->validateToken($db);
     $auth_id = $authData['id'];
     $Role = $authData['role'];
@@ -67,8 +65,7 @@ if (str_ends_with($uri, '/TICKET') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
          * ROLE: USER
      */
 
-    $input = json_decode(file_get_contents('php://input'), true);
-    $idTicket = $input['id_ticket'] ?? null;
+    $idTicket = $_GET['id_ticket'] ?? null;
 
     if (empty($idTicket)) {
         http_response_code(400);
@@ -89,9 +86,9 @@ if (str_ends_with($uri, '/TICKET') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
         $resTicket = $db->statementDB("SELECT * FROM tickets WHERE id = ?",
             [$idTicket]);
 
-    if ($resTicket && count($resTicket) > 0) {
+    if ($resTicket) {
         http_response_code(200);
-        echo json_encode(['TICKET', $resTicket[0]]);
+        echo json_encode(['TICKET', $resTicket]);
     } else {
         http_response_code(404);
         echo json_encode(['TICKET NOT FOUND']);
@@ -202,7 +199,7 @@ if (str_ends_with($uri, '/UPDATETICKET') && ($_SERVER['REQUEST_METHOD'] == 'PUT'
 if (str_ends_with($uri, '/DELETETICKET') && ($_SERVER['REQUEST_METHOD'] == 'DELETE')) {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    $id = $input['id_ticket'] ?? null;
+    $id = $_GET['id_ticket'] ?? null;
 
     if (empty($id)) {
         http_response_code(500);

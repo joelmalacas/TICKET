@@ -21,9 +21,8 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 //TODO ENDPOINT RESPOSTAS
 if (str_ends_with($uri, '/RESPOSTAS') && ($_SERVER['REQUEST_METHOD'] == 'GET')) {
-    $input = json_decode(file_get_contents('php://input'), true);
 
-    $idTicket = $input['ticket_id'] ?? null;
+    $idTicket = $_GET['ticket_id'] ?? null;
 
     if (empty($idTicket)) {
         http_response_code(400);
