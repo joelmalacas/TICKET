@@ -90,7 +90,7 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
     if (!empty($resLog) && count($resLog) > 0) {
         $user = $resLog[0];
 
-        if (hash(ENCRYPT, $pass) === $hashedPassword) {
+        if ($hashedPassword === $user['password']) {
             //TODO Mudar estado para online
             $resEstado = $db->statementDB("UPDATE users SET estado = ? WHERE id = ?", [ON, $user['id']]);
 
@@ -107,7 +107,16 @@ if (str_ends_with($uri, '/LoginUser') && ($_SERVER['REQUEST_METHOD'] === 'POST')
             $token = $Auth->token($db, $user['id'], ROLE);
 
             http_response_code(200);
-            echo json_encode(['success' => 'Login successful']);
+            echo json_encode([
+                'Success' => true,
+                'Message' => 'Login efetuado com sucesso.',
+                'Token'   => $token,
+                'User'    => [
+                    'id'       => $user['id'],
+                    'username' => $user['username'],
+                    'email'    => $user['email']
+                ]
+            ]);
         } else {
             http_response_code(500);
             echo json_encode(['error' => 'Credenciais inválidas']);
