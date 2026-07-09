@@ -129,7 +129,8 @@ if (str_ends_with($uri, '/LoginAdmin') && ($_SERVER['REQUEST_METHOD'] === 'POST'
 
 //TODO ENDPOINT LOGOUT ADMIN
 if (str_ends_with($uri, '/LogoutAdmin') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
-    $auth_user_id = $Auth->validateToken($db, ROLE);
+    $authData = $Auth->validateToken($db);
+    $auth_user_id = $authData['id'];
 
     $resLog = $db->statementDB("UPDATE admin SET estado = ? WHERE id = ?", [OFF, $auth_user_id]);
     $resNullToken = $db->statementDB("UPDATE admin SET token = ? WHERE id = ?", [NULL, $auth_user_id]);
@@ -145,7 +146,7 @@ if (str_ends_with($uri, '/LogoutAdmin') && ($_SERVER['REQUEST_METHOD'] === 'PUT'
 
 //TODO ENDPOINT UPDATE ADMIN
 if (str_ends_with($uri, '/UpdateAdmin') && ($_SERVER['REQUEST_METHOD'] === 'PUT')) {
-    $auth_user_id = $Auth->validateToken($db, ROLE);
+    $auth_user_id = $Auth->validateToken($db);
 
     $input = json_decode(file_get_contents('php://input'), true);
     $username = $input['username'];
