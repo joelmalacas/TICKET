@@ -1,15 +1,1007 @@
-<!doctype html>
-<html lang="pt">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Balcão de Tickets</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Central de Tickets</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  :root{
+    --bg: #0D0F14;
+    --surface: #151923;
+    --surface-2: #1B2130;
+    --surface-3: #232A3D;
+    --border: #2A3145;
+    --text: #E9E8E3;
+    --text-dim: #8B92A8;
+    --text-faint: #565E75;
+    --amber: #E8A33D;
+    --teal: #3FA796;
+    --rose: #D1495B;
+    --orange: #E8813D;
+    --blue: #5B8DEF;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', ui-monospace, monospace;
+    --sans: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --radius: 6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);}
+  body{
+    font-family:var(--sans);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  #root{height:100vh;overflow:hidden;}
+  ::selection{background:var(--amber);color:#0D0F14;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--border);}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  a{color:var(--blue);}
+
+  .mono{font-family:var(--mono);}
+
+  /* ---------- Auth screen ---------- */
+  .auth-wrap{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(232,163,61,0.07), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(63,167,150,0.08), transparent 40%),
+      var(--bg);
+    padding:20px;
+  }
+  .auth-card{
+    width:100%;
+    max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:36px 34px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .auth-card::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg, var(--amber), var(--rose), var(--teal));
+  }
+  .auth-brand{
+    display:flex;align-items:center;gap:10px;margin-bottom:6px;
+  }
+  .auth-brand .dot{
+    width:10px;height:10px;border-radius:50%;background:var(--teal);
+    box-shadow:0 0 0 3px rgba(63,167,150,0.18);
+  }
+  .auth-brand span{
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;
+  }
+  .auth-title{font-size:24px;font-weight:800;margin:2px 0 26px;letter-spacing:-.02em;}
+  .tabbar{display:flex;background:var(--surface-2);border-radius:8px;padding:3px;margin-bottom:20px;}
+  .tabbar button{
+    flex:1;border:none;background:transparent;color:var(--text-dim);
+    padding:9px 0;border-radius:6px;font-size:13px;font-weight:600;transition:.15s;
+  }
+  .tabbar button.active{background:var(--surface-3);color:var(--text);}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-size:11.5px;font-weight:600;color:var(--text-dim);
+    margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;transition:.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color:var(--amber);background:var(--surface-3);
+  }
+  .role-toggle{display:flex;gap:8px;margin-bottom:16px;}
+  .role-toggle button{
+    flex:1;padding:9px 0;border-radius:6px;border:1px solid var(--border);
+    background:var(--surface-2);color:var(--text-dim);font-size:12.5px;font-weight:600;
+  }
+  .role-toggle button.active{border-color:var(--blue);color:var(--blue);background:rgba(91,141,239,0.08);}
+  .btn{
+    width:100%;padding:11px 0;border-radius:6px;border:none;
+    background:var(--amber);color:#0D0F14;font-weight:700;font-size:14px;
+    transition:.15s; letter-spacing:.01em;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent;border:1px solid var(--border);color:var(--text);
+  }
+  .btn-danger{background:var(--rose);color:#fff;}
+  .btn-small{width:auto;padding:7px 14px;font-size:12.5px;border-radius:6px;}
+  .auth-error{
+    background:rgba(209,73,91,0.12);border:1px solid rgba(209,73,91,0.35);
+    color:#f2a3ac;font-size:12.5px;padding:9px 11px;border-radius:6px;margin-bottom:14px;
+  }
+  .auth-hint{font-size:11.5px;color:var(--text-faint);margin-top:16px;line-height:1.6;}
+  .auth-hint code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-family:var(--mono);}
+
+  /* ---------- Shell ---------- */
+  .shell{height:100%;display:flex;flex-direction:column;}
+  .topbar{
+    height:54px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;background:var(--surface);border-bottom:1px solid var(--border);
+  }
+  .topbar-left{display:flex;align-items:center;gap:14px;}
+  .brand-mark{display:flex;align-items:center;gap:9px;}
+  .brand-mark .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);}
+  .brand-mark b{font-size:14px;letter-spacing:-.01em;}
+  .live-pill{
+    display:flex;align-items:center;gap:6px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 8px;
+    font-family:var(--mono);font-size:10.5px;color:var(--text-dim);letter-spacing:.05em;
+  }
+  .live-pulse{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.8s infinite;}
+  .live-pulse.paused{background:var(--text-faint);animation:none;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(63,167,150,.55);}
+    70%{box-shadow:0 0 0 6px rgba(63,167,150,0);}
+    100%{box-shadow:0 0 0 0 rgba(63,167,150,0);}
+  }
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .user-chip{
+    display:flex;align-items:center;gap:8px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:20px;padding:5px 12px 5px 6px;font-size:12.5px;
+  }
+  .user-avatar{
+    width:22px;height:22px;border-radius:50%;background:var(--blue);
+    display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#0D0F14;
+  }
+  .role-badge{
+    font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:4px;letter-spacing:.05em;
+    background:rgba(91,141,239,0.15);color:var(--blue);
+  }
+  .role-badge.admin{background:rgba(232,163,61,0.15);color:var(--amber);}
+  .icon-btn{
+    width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--text-faint);}
+
+  .body{flex:1;display:flex;min-height:0;}
+  .sidebar{
+    width:340px;flex:0 0 auto;border-right:1px solid var(--border);background:var(--surface);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .sidebar-head{padding:14px 14px 10px;border-bottom:1px solid var(--border);}
+  .sidebar-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .sidebar-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);font-weight:700;}
+  .new-ticket-btn{
+    background:var(--amber);color:#0D0F14;border:none;border-radius:6px;
+    padding:6px 10px;font-size:12px;font-weight:700;
+  }
+  .filter-row{display:flex;gap:5px;flex-wrap:wrap;}
+  .filter-chip{
+    font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:5px;
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);letter-spacing:.03em;
+  }
+  .filter-chip.active{color:var(--text);border-color:var(--text-faint);background:var(--surface-3);}
+  .ticket-list{flex:1;overflow-y:auto;padding:6px;}
+  .ticket-row{
+    padding:11px 11px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent;transition:.12s;
+  }
+  .ticket-row:hover{background:var(--surface-2);}
+  .ticket-row.selected{background:var(--surface-3);border-color:var(--border);}
+  .ticket-row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+  .ticket-id{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+  .ticket-title{font-size:13.5px;font-weight:600;margin-bottom:4px;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+  .ticket-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .badge{
+    font-family:var(--mono);font-size:9.5px;padding:2.5px 6px;border-radius:4px;letter-spacing:.03em;
+    text-transform:uppercase;font-weight:600;
+  }
+  .empty-list{padding:30px 16px;text-align:center;color:var(--text-faint);font-size:12.5px;}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);}
+  .empty-main{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--text-faint);gap:8px;
+  }
+  .empty-main .glyph{font-size:34px;opacity:.35;}
+  .empty-main p{font-size:13px;max-width:280px;text-align:center;line-height:1.6;}
+
+  .ticket-header{
+    padding:16px 22px;border-bottom:1px solid var(--border);background:var(--surface);
+    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  }
+  .ticket-header h2{font-size:17px;margin:0 0 6px;font-weight:700;letter-spacing:-.01em;}
+  .ticket-header-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text-dim);}
+  .ticket-desc{font-size:13px;color:var(--text-dim);margin-top:8px;line-height:1.55;max-width:640px;}
+  .admin-controls{display:flex;gap:8px;align-items:center;flex:0 0 auto;}
+  .estado-select{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:7px 10px;font-size:12px;font-family:var(--mono);
+  }
+
+  .thread{flex:1;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:12px;}
+  .msg-row{display:flex;flex-direction:column;max-width:62%;}
+  .msg-row.mine{align-self:flex-end;align-items:flex-end;}
+  .msg-row.theirs{align-self:flex-start;align-items:flex-start;}
+  .msg-tag{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-bottom:4px;letter-spacing:.04em;padding:0 3px;}
+  .msg-bubble{
+    padding:9px 13px;border-radius:10px;font-size:13.5px;line-height:1.5;
+    background:var(--surface-2);border:1px solid var(--border);
+  }
+  .msg-row.mine .msg-bubble{background:rgba(232,163,61,0.12);border-color:rgba(232,163,61,0.3);}
+  .msg-row.mine .msg-bubble.pending{opacity:.55;}
+  .msg-time{font-size:10px;color:var(--text-faint);margin-top:3px;padding:0 3px;}
+  .thread-empty{margin:auto;color:var(--text-faint);font-size:12.5px;}
+
+  .composer{
+    border-top:1px solid var(--border);background:var(--surface);padding:12px 16px;
+    display:flex;gap:10px;align-items:flex-end;
+  }
+  .composer textarea{
+    flex:1;resize:none;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:8px;padding:10px 12px;color:var(--text);font-size:13.5px;max-height:120px;min-height:42px;outline:none;
+  }
+  .composer textarea:focus{border-color:var(--amber);}
+  .send-btn{
+    width:42px;height:42px;border-radius:8px;border:none;background:var(--amber);
+    color:#0D0F14;font-weight:700;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:16px;
+  }
+  .send-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---------- Modal ---------- */
+  .modal-veil{
+    position:fixed;inset:0;background:rgba(6,7,10,0.6);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal{
+    width:100%;max-width:460px;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:24px 24px 20px;max-height:88vh;overflow-y:auto;
+  }
+  .modal h3{margin:0 0 4px;font-size:16px;font-weight:700;}
+  .modal .sub{font-size:12px;color:var(--text-dim);margin-bottom:18px;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions .btn, .modal-actions .btn-ghost{flex:1;}
+
+  .priority-grid{display:flex;gap:7px;}
+  .priority-opt{
+    flex:1;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);
+    padding:8px 4px;text-align:center;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--text-dim);
+  }
+  .priority-opt.active{border-width:1.5px;}
+
+  /* ---------- Debug drawer ---------- */
+  .debug-toggle{
+    position:fixed;bottom:14px;right:14px;z-index:40;
+    background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:20px;padding:7px 13px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+  }
+  .debug-drawer{
+    position:fixed;bottom:0;right:0;left:0;max-height:46vh;background:var(--surface);
+    border-top:1px solid var(--border);z-index:41;display:flex;flex-direction:column;
+  }
+  .debug-drawer-head{
+    display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);
+  }
+  .debug-drawer-head b{font-size:12px;font-family:var(--mono);letter-spacing:.05em;color:var(--text-dim);}
+  .debug-settings{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .debug-settings input{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    border-radius:5px;padding:6px 9px;font-size:11.5px;font-family:var(--mono);
+  }
+  .debug-log{flex:1;overflow-y:auto;padding:8px 16px;font-family:var(--mono);font-size:11px;}
+  .debug-line{padding:6px 0;border-bottom:1px dashed var(--border);display:flex;gap:10px;align-items:baseline;}
+  .debug-line .m{color:var(--blue);width:42px;flex:0 0 auto;}
+  .debug-line .s.ok{color:var(--teal);}
+  .debug-line .s.err{color:var(--rose);}
+  .debug-line .u{color:var(--text-dim);flex:1;word-break:break-all;}
+  .debug-line .t{color:var(--text-faint);flex:0 0 auto;}
+
+  /* ---------- Toasts ---------- */
+  .toast-stack{position:fixed;top:16px;right:16px;z-index:60;display:flex;flex-direction:column;gap:8px;}
+  .toast{
+    background:var(--surface-3);border:1px solid var(--border);border-left:3px solid var(--teal);
+    border-radius:6px;padding:10px 14px;font-size:12.5px;min-width:220px;max-width:320px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .toast.error{border-left-color:var(--rose);}
+
+  .spin{
+    width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);
+    border-top-color:#0D0F14;animation:spin .7s linear infinite;display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media (max-width: 860px){
+    .sidebar{width:100%;position:absolute;inset:0;z-index:5;}
+    .sidebar.hidden-mobile{display:none;}
+    .main.hidden-mobile{display:none;}
+    .body{position:relative;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const DEFAULT_API_BASE = 'http://192.168.1.84:8080';
+const DEFAULT_AUTH_SCHEME = 'Bearer';
+
+const PRIORIDADES = [
+  { value: 'baixa',   label: 'Baixa',   color: 'var(--teal)'  },
+  { value: 'media',   label: 'Média',   color: 'var(--amber)' },
+  { value: 'alta',    label: 'Alta',    color: 'var(--orange)'},
+  { value: 'critica', label: 'Crítica', color: 'var(--rose)'  },
+];
+const priorityInfo = (v) => PRIORIDADES.find(p => p.value === v) || { label: v || '—', color: 'var(--text-faint)' };
+
+const ESTADOS = ['aberto', 'em analise', 'aguardar resposta', 'resolvido', 'cancelado'];
+const ESTADO_COLOR = {
+  'aberto': 'var(--blue)',
+  'em analise': 'var(--amber)',
+  'aguardar resposta': 'var(--orange)',
+  'resolvido': 'var(--teal)',
+  'cancelado': 'var(--text-faint)',
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function extractMessage(json) {
+  if (json == null) return '';
+  if (typeof json === 'string') return json;
+  if (Array.isArray(json)) {
+    return json.map(v => (typeof v === 'string' ? v : '')).filter(Boolean).join(' — ');
+  }
+  if (typeof json === 'object') {
+    const keys = ['error', 'Error', 'message', 'Message', 'success', 'Success'];
+    for (const k of keys) {
+      if (json[k] !== undefined && typeof json[k] === 'string') return json[k];
+    }
+  }
+  return '';
+}
+
+function asRows(val) {
+  // backend sometimes returns a single row object, sometimes an array of rows
+  if (val == null) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return [val];
+  return [];
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return dateStr;
+  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (diff < 60) return 'agora';
+  if (diff < 3600) return Math.floor(diff / 60) + 'min';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+  if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd';
+  return d.toLocaleDateString('pt-PT');
+}
+
+function fmtClock(d) {
+  return d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function initials(name) {
+  if (!name) return '?';
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+let toastId = 0;
+function useToasts() {
+  const [toasts, setToasts] = useState([]);
+  const push = useCallback((text, type = 'ok') => {
+    const id = ++toastId;
+    setToasts(t => [...t, { id, text, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3800);
+  }, []);
+  return [toasts, push];
+}
+
+function ToastStack({ toasts }) {
+  return (
+    <div className="toast-stack">
+      {toasts.map(t => (
+        <div key={t.id} className={"toast" + (t.type === 'error' ? ' error' : '')}>{t.text}</div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   API HOOK
+   ============================================================ */
+function useApi(apiBase, token, authScheme, onLog) {
+  return useCallback(async (method, path, body) => {
+    const url = apiBase.replace(/\/+$/, '') + path;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = (authScheme ? authScheme + ' ' : '') + token;
+    const started = new Date();
+    let status = 0, json = null, ok = false, errText = '';
+    try {
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+      status = res.status;
+      ok = res.ok;
+      const raw = await res.text();
+      try { json = raw ? JSON.parse(raw) : null; } catch (e) { json = raw; }
+      if (!ok) errText = extractMessage(json) || ('Erro ' + status);
+    } catch (e) {
+      errText = 'Falha de rede — verifica se a API está a correr em ' + apiBase + ' e se o CORS está ativo.';
+    }
+    onLog({ method, url, status, ok, time: started });
+    if (!ok) {
+      const err = new Error(errText || 'Erro desconhecido');
+      err.json = json;
+      err.status = status;
+      throw err;
+    }
+    return json;
+  }, [apiBase, token, authScheme, onLog]);
+}
+
+/* ============================================================
+   AUTH SCREEN
+   ============================================================ */
+function AuthScreen({ api, onLogin, toast }) {
+  const [tab, setTab] = useState('login');       // login | register
+  const [role, setRole] = useState('user');       // user | admin
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    setBusy(true);
+    try {
+      if (tab === 'login') {
+        const path = role === 'admin' ? '/admin/LoginAdmin' : '/users/LoginUser';
+        const res = await api('POST', path, { username: form.username, password: form.password });
+        if (res && res.Token) {
+          onLogin({ token: res.Token, user: res.User, role });
+          toast('Sessão iniciada como ' + (res.User && res.User.username));
+        } else {
+          setErr(extractMessage(res) || 'Resposta inesperada do servidor.');
+        }
+      } else {
+        const path = role === 'admin' ? '/admin/CreateAdmin' : '/users/CreateUser';
+        const res = await api('POST', path, form);
+        toast(extractMessage(res) || 'Conta criada. Podes iniciar sessão.');
+        setTab('login');
+      }
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const minLen = role === 'admin' ? 8 : 5;
+
+  return (
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-brand"><span className="dot"></span><span>Central de Tickets</span></div>
+        <div className="auth-title">{tab === 'login' ? 'Iniciar sessão' : 'Criar conta'}</div>
+
+        <div className="tabbar">
+          <button className={tab === 'login' ? 'active' : ''} onClick={() => { setTab('login'); setErr(''); }}>Entrar</button>
+          <button className={tab === 'register' ? 'active' : ''} onClick={() => { setTab('register'); setErr(''); }}>Registar</button>
+        </div>
+
+        <div className="role-toggle">
+          <button className={role === 'user' ? 'active' : ''} onClick={() => setRole('user')}>Utilizador</button>
+          <button className={role === 'admin' ? 'active' : ''} onClick={() => setRole('admin')}>Administrador</button>
+        </div>
+
+        {err && <div className="auth-error">{err}</div>}
+
+        <form onSubmit={submit}>
+          {tab === 'register' && (
+            <div className="field">
+              <label>Nome de utilizador</label>
+              <input required value={form.username} onChange={set('username')} placeholder="ex: joana.silva" />
+            </div>
+          )}
+          {tab === 'login' && (
+            <div className="field">
+              <label>Utilizador ou email</label>
+              <input required value={form.username} onChange={set('username')} placeholder="utilizador ou email" />
+            </div>
+          )}
+          {tab === 'register' && (
+            <div className="field">
+              <label>Email</label>
+              <input required type="email" value={form.email} onChange={set('email')} placeholder="tu@exemplo.com" />
+            </div>
+          )}
+          <div className="field">
+            <label>Password {tab === 'register' ? `(mín. ${minLen} caracteres)` : ''}</label>
+            <input required type="password" minLength={tab === 'register' ? minLen : undefined}
+              value={form.password} onChange={set('password')} placeholder="••••••••" />
+          </div>
+
+          <button className="btn" disabled={busy} type="submit">
+            {busy ? <span className="spin"></span> : (tab === 'login' ? 'Entrar' : 'Criar conta')}
+          </button>
+        </form>
+
+        <div className="auth-hint">
+          A app fala com <code>{DEFAULT_API_BASE}</code>. Podes ajustar a URL da API e o formato do header
+          de autorização no painel de depuração (canto inferior direito), caso o teu <code>Auth::validateToken()</code>
+          espere algo diferente de <code>Authorization: Bearer &lt;token&gt;</code>.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   NEW TICKET MODAL
+   ============================================================ */
+function NewTicketModal({ api, onClose, onCreated, toast }) {
+  const [form, setForm] = useState({ titulo: '', descricao: '', categoria: '', prioridade: 'media' });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(''); setBusy(true);
+    try {
+      await api('POST', '/tickets/CREATETICKET', form);
+      toast('Ticket criado com sucesso.');
+      onCreated();
+    } catch (e2) {
+      setErr(e2.message);
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="modal-veil" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <h3>Novo ticket</h3>
+        <div className="sub">Descreve o problema — a equipa responde na conversa do ticket.</div>
+        {err && <div className="auth-error">{err}</div>}
+        <form onSubmit={submit}>
+          <div className="field">
+            <label>Título</label>
+            <input required value={form.titulo} onChange={set('titulo')} placeholder="Resumo curto do problema" />
+          </div>
+          <div className="field">
+            <label>Categoria</label>
+            <input required value={form.categoria} onChange={set('categoria')} placeholder="ex: Técnico, Faturação, Conta..." />
+          </div>
+          <div className="field">
+            <label>Prioridade</label>
+            <div className="priority-grid">
+              {PRIORIDADES.map(p => (
+                <button type="button" key={p.value}
+                  className={"priority-opt" + (form.prioridade === p.value ? ' active' : '')}
+                  style={form.prioridade === p.value ? { borderColor: p.color, color: p.color } : {}}
+                  onClick={() => setForm(f => ({ ...f, prioridade: p.value }))}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label>Descrição</label>
+            <textarea required rows={4} value={form.descricao} onChange={set('descricao')} placeholder="Explica o que se passa em detalhe..." />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn" disabled={busy}>{busy ? <span className="spin"></span> : 'Criar ticket'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   TICKET LIST (sidebar)
+   ============================================================ */
+function TicketList({ tickets, loading, selectedId, onSelect, filter, setFilter, isAdmin, onNew }) {
+  const filtered = useMemo(() => {
+    if (filter === 'todos') return tickets;
+    return tickets.filter(t => t.estado === filter);
+  }, [tickets, filter]);
+
+  return (
+    <div className="sidebar">
+      <div className="sidebar-head">
+        <div className="sidebar-head-row">
+          <div className="sidebar-title">{isAdmin ? 'Todos os tickets' : 'Os meus tickets'}</div>
+          {!isAdmin && <button className="new-ticket-btn" onClick={onNew}>+ Novo</button>}
+        </div>
+        <div className="filter-row">
+          <span className={"filter-chip" + (filter === 'todos' ? ' active' : '')} onClick={() => setFilter('todos')}>TODOS</span>
+          {ESTADOS.map(s => (
+            <span key={s} className={"filter-chip" + (filter === s ? ' active' : '')} onClick={() => setFilter(s)}>
+              {s.toUpperCase()}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="ticket-list">
+        {loading && tickets.length === 0 && <div className="empty-list">A carregar tickets…</div>}
+        {!loading && filtered.length === 0 && <div className="empty-list">Sem tickets nesta vista.</div>}
+        {filtered.map(t => (
+          <div key={t.id} className={"ticket-row" + (String(t.id) === String(selectedId) ? ' selected' : '')} onClick={() => onSelect(t.id)}>
+            <div className="ticket-row-top">
+              <span className="ticket-id mono">#{String(t.id).padStart(3, '0')}</span>
+              <span className="ticket-meta" style={{ fontSize: '10px', color: 'var(--text-faint)' }}>{timeAgo(t.updated_at || t.created_at)}</span>
+            </div>
+            <div className="ticket-title">{t.titulo || '(sem título)'}</div>
+            <div className="ticket-meta">
+              <span className="badge" style={{ color: ESTADO_COLOR[t.estado] || 'var(--text-dim)', background: 'rgba(255,255,255,0.04)' }}>{t.estado}</span>
+              <span className="badge" style={{ color: priorityInfo(t.prioridade).color, background: 'rgba(255,255,255,0.04)' }}>{t.prioridade}</span>
+              {t.categoria && <span className="badge" style={{ color: 'var(--text-dim)', background: 'rgba(255,255,255,0.04)' }}>{t.categoria}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   TICKET DETAIL (thread)
+   ============================================================ */
+function TicketDetail({ api, ticketId, currentUser, isAdmin, toast, onChanged, apiBase, authScheme }) {
+  const [ticket, setTicket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [estadoBusy, setEstadoBusy] = useState(false);
+  const threadRef = useRef(null);
+  const pollRef = useRef(null);
+
+  const loadTicket = useCallback(async () => {
+    try {
+      const res = await api('GET', '/tickets/TICKET?id_ticket=' + encodeURIComponent(ticketId));
+      const rows = asRows(res && res[1] !== undefined ? res[1] : res);
+      if (rows[0]) setTicket(rows[0]);
+    } catch (e) { /* silent on poll */ }
+  }, [api, ticketId]);
+
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await api('GET', '/Respostas/RESPOSTAS?ticket_id=' + encodeURIComponent(ticketId));
+      const rows = asRows(res && res.RESPOSTA !== undefined ? res.RESPOSTA : res);
+      setMessages(prev => {
+        // keep locally-pending optimistic messages that haven't landed yet
+        const pending = prev.filter(m => m.pending);
+        const serverIds = new Set(rows.map(r => String(r.id)));
+        const stillPending = pending.filter(p => !rows.some(r => r.mensagem === p.mensagem && String(r.user_id) === String(p.user_id)));
+        return [...rows, ...stillPending];
+      });
+    } catch (e) { /* silent on poll */ }
+  }, [api, ticketId]);
+
+  useEffect(() => {
+    setTicket(null);
+    setMessages([]);
+    loadTicket();
+    loadMessages();
+  }, [ticketId]);
+
+  useEffect(() => {
+    function tick() {
+      if (document.hidden) return;
+      loadTicket();
+      loadMessages();
+    }
+    pollRef.current = setInterval(tick, 2500);
+    return () => clearInterval(pollRef.current);
+  }, [loadTicket, loadMessages]);
+
+  useEffect(() => {
+    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [messages.length]);
+
+  const send = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft('');
+    setSending(true);
+    const optimistic = { id: 'tmp-' + Date.now(), mensagem: text, user_id: currentUser.id, pending: true };
+    setMessages(m => [...m, optimistic]);
+    try {
+      await api('POST', '/Respostas/CREATERESPOSTA', { ticket_id: ticketId, mensagem: text });
+      await loadMessages();
+    } catch (e) {
+      toast(e.message, 'error');
+      setMessages(m => m.filter(x => x.id !== optimistic.id));
+      setDraft(text);
+    } finally { setSending(false); }
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
+
+  const changeEstado = async (novoEstado) => {
+    setEstadoBusy(true);
+    try {
+      await api('PUT', '/tickets/UPDATETICKET', { id_ticket: ticketId, estado: novoEstado });
+      setTicket(t => t ? { ...t, estado: novoEstado } : t);
+      toast('Estado atualizado para "' + novoEstado + '".');
+      onChanged();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally { setEstadoBusy(false); }
+  };
+
+  const deleteTicket = async () => {
+    if (!window.confirm('Eliminar este ticket permanentemente?')) return;
+    try {
+      await api('DELETE', '/tickets/DELETETICKET?id_ticket=' + encodeURIComponent(ticketId));
+      toast('Ticket eliminado.');
+      onChanged(true);
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+
+  if (!ticket) {
+    return <div className="main"><div className="empty-main"><div className="spin" style={{ borderTopColor: 'var(--amber)' }}></div><p>A carregar ticket…</p></div></div>;
+  }
+
+  return (
+    <div className="main">
+      <div className="ticket-header">
+        <div>
+          <h2>#{String(ticket.id).padStart(3, '0')} · {ticket.titulo}</h2>
+          <div className="ticket-header-meta">
+            <span className="badge" style={{ color: ESTADO_COLOR[ticket.estado], background: 'rgba(255,255,255,0.04)' }}>{ticket.estado}</span>
+            <span className="badge" style={{ color: priorityInfo(ticket.prioridade).color, background: 'rgba(255,255,255,0.04)' }}>{ticket.prioridade}</span>
+            {ticket.categoria && <span>· {ticket.categoria}</span>}
+            <span>· aberto {timeAgo(ticket.created_at)}</span>
+          </div>
+          {ticket.descricao && <div className="ticket-desc">{ticket.descricao}</div>}
+        </div>
+        {isAdmin && (
+          <div className="admin-controls">
+            <select className="estado-select" value={ticket.estado} disabled={estadoBusy} onChange={(e) => changeEstado(e.target.value)}>
+              {ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <button className="icon-btn" title="Eliminar ticket" onClick={deleteTicket}>✕</button>
+          </div>
+        )}
+      </div>
+
+      <div className="thread" ref={threadRef}>
+        {messages.length === 0 && <div className="thread-empty">Ainda sem respostas — escreve a primeira mensagem abaixo.</div>}
+        {messages.map(m => {
+          const mine = parseInt(m.user_id, 10) === parseInt(currentUser.id, 10);
+          return (
+            <div key={m.id} className={"msg-row " + (mine ? 'mine' : 'theirs')}
+              style={mine ? { marginLeft: 'auto' } : { marginRight: 'auto' }}>
+              <span className="msg-tag">{mine ? 'TU' : 'RESPOSTA'}</span>
+              <div className={"msg-bubble" + (m.pending ? ' pending' : '')}>{m.mensagem}</div>
+              <span className="msg-time">{m.pending ? 'a enviar…' : timeAgo(m.created_at)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="composer">
+        <textarea
+          placeholder="Escreve uma resposta… (Enter para enviar, Shift+Enter para nova linha)"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+        <button className="send-btn" disabled={sending || !draft.trim()} onClick={send}>
+          {sending ? <span className="spin"></span> : '➤'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   DEBUG DRAWER
+   ============================================================ */
+function DebugDrawer({ open, setOpen, log, apiBase, setApiBase, authScheme, setAuthScheme }) {
+  if (!open) return <button className="debug-toggle" onClick={() => setOpen(true)}>◆ depuração</button>;
+  return (
+    <div className="debug-drawer">
+      <div className="debug-drawer-head">
+        <b>PAINEL DE DEPURAÇÃO</b>
+        <button className="icon-btn" onClick={() => setOpen(false)}>✕</button>
+      </div>
+      <div className="debug-settings">
+        <input style={{ flex: 2, minWidth: 220 }} value={apiBase} onChange={(e) => setApiBase(e.target.value)} placeholder="http://192.168.1.84:8080" />
+        <input style={{ flex: 1, minWidth: 120 }} value={authScheme} onChange={(e) => setAuthScheme(e.target.value)} placeholder="Bearer" />
+        <span style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--text-faint)', alignSelf: 'center' }}>
+          Header enviado: Authorization: {authScheme || '(vazio)'} &lt;token&gt;
+        </span>
+      </div>
+      <div className="debug-log">
+        {log.length === 0 && <div style={{ color: 'var(--text-faint)' }}>Sem pedidos ainda.</div>}
+        {log.slice().reverse().map((l, i) => (
+          <div className="debug-line" key={i}>
+            <span className="m">{l.method}</span>
+            <span className={"s " + (l.ok ? 'ok' : 'err')}>{l.status || 'ERR'}</span>
+            <span className="u">{l.url}</span>
+            <span className="t">{fmtClock(l.time)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ROOT APP
+   ============================================================ */
+function App() {
+  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
+  const [authScheme, setAuthScheme] = useState(DEFAULT_AUTH_SCHEME);
+  const [session, setSession] = useState(null); // { token, user, role }
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugLog, setDebugLog] = useState([]);
+  const [toasts, toast] = useToasts();
+
+  const logRequest = useCallback((entry) => setDebugLog(l => [...l.slice(-49), entry]), []);
+  const api = useApi(apiBase, session && session.token, authScheme, logRequest);
+
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [filter, setFilter] = useState('todos');
+  const [showNew, setShowNew] = useState(false);
+  const [clock, setClock] = useState(new Date());
+  const [tabHidden, setTabHidden] = useState(document.hidden);
+
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000);
+    const onVis = () => setTabHidden(document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVis); };
+  }, []);
+
+  const isAdmin = session && session.role === 'admin';
+
+  const loadTickets = useCallback(async () => {
+    if (!session) return;
+    setTicketsLoading(true);
+    try {
+      const res = await api('GET', '/tickets/TICKETS');
+      const rows = asRows(res && res[1] !== undefined ? res[1] : res);
+      setTickets(rows);
+    } catch (e) {
+      // silent on background poll, surfaced only on first load
+    } finally { setTicketsLoading(false); }
+  }, [api, session]);
+
+  useEffect(() => { if (session) loadTickets(); }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    const iv = setInterval(() => { if (!document.hidden) loadTickets(); }, 5000);
+    return () => clearInterval(iv);
+  }, [session, loadTickets]);
+
+  const handleLogin = (s) => setSession(s);
+
+  const handleLogout = async () => {
+    try {
+      const path = isAdmin ? '/admin/LogoutAdmin' : '/users/LogoutUser';
+      await api('PUT', path);
+    } catch (e) { /* ignore */ }
+    setSession(null);
+    setTickets([]);
+    setSelectedId(null);
+  };
+
+  if (!session) {
+    return (
+      <React.Fragment>
+        <AuthScreen api={api} onLogin={handleLogin} toast={toast} />
+        <ToastStack toasts={toasts} />
+        <DebugDrawer open={debugOpen} setOpen={setDebugOpen} log={debugLog}
+          apiBase={apiBase} setApiBase={setApiBase} authScheme={authScheme} setAuthScheme={setAuthScheme} />
+      </React.Fragment>
+    );
+  }
+
+  return (
+    <div className="shell">
+      <div className="topbar">
+        <div className="topbar-left">
+          <div className="brand-mark"><span className="dot"></span><b>Central de Tickets</b></div>
+          <div className="live-pill">
+            <span className={"live-pulse" + (tabHidden ? ' paused' : '')}></span>
+            {tabHidden ? 'EM PAUSA' : 'AO VIVO'} · {fmtClock(clock)}
+          </div>
+        </div>
+        <div className="topbar-right">
+          <div className="user-chip">
+            <span className="user-avatar">{initials(session.user && session.user.username)}</span>
+            <span>{session.user && session.user.username}</span>
+            <span className={"role-badge" + (isAdmin ? ' admin' : '')}>{isAdmin ? 'ADMIN' : 'USER'}</span>
+          </div>
+          <button className="icon-btn" title="Terminar sessão" onClick={handleLogout}>⏻</button>
+        </div>
+      </div>
+
+      <div className="body">
+        <TicketList
+          tickets={tickets}
+          loading={ticketsLoading}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          filter={filter}
+          setFilter={setFilter}
+          isAdmin={isAdmin}
+          onNew={() => setShowNew(true)}
+        />
+
+        {selectedId ? (
+          <TicketDetail
+            key={selectedId}
+            api={api}
+            ticketId={selectedId}
+            currentUser={session.user}
+            isAdmin={isAdmin}
+            toast={toast}
+            apiBase={apiBase}
+            authScheme={authScheme}
+            onChanged={(deleted) => { loadTickets(); if (deleted) setSelectedId(null); }}
+          />
+        ) : (
+          <div className="main">
+            <div className="empty-main">
+              <div className="glyph">◇</div>
+              <p>Seleciona um ticket na lista para veres a conversa,{!isAdmin ? ' ou cria um novo pedido.' : '.'}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showNew && (
+        <NewTicketModal
+          api={api}
+          onClose={() => setShowNew(false)}
+          onCreated={() => { setShowNew(false); loadTickets(); }}
+          toast={toast}
+        />
+      )}
+
+      <ToastStack toasts={toasts} />
+      <DebugDrawer open={debugOpen} setOpen={setDebugOpen} log={debugLog}
+        apiBase={apiBase} setApiBase={setApiBase} authScheme={authScheme} setAuthScheme={setAuthScheme} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
 </html>
